@@ -119,22 +119,207 @@ window.__ModuleLoader__.load({
       return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
     }
     function pair(v) { return { light: v, dark: v }; }
+
+    // ---- Full semantic-token coverage -----------------------------------
+    // DSH ships ~117 `--dsw-alias-*` semantic tokens. A theme only looks
+    // coherent when every surface/label/border family is remapped, not just the
+    // few we touch by hand — otherwise stray defaults (a light-grey card, a
+    // blue link, a neutral tooltip) leak through the Matrix palette. We derive
+    // the whole set from a small number of palette colors.
+
+    // Mix two hex colors; t=0 → a, t=1 → b. Keeps derivations tinted toward the
+    // palette accent instead of neutral greys.
+    function mix(a, b, t) {
+      const pa = hexRgb(a), pb = hexRgb(b);
+      if (!pa || !pb) return a;
+      const r = Math.round(pa[0] + (pb[0] - pa[0]) * t);
+      const g = Math.round(pa[1] + (pb[1] - pa[1]) * t);
+      const bl = Math.round(pa[2] + (pb[2] - pa[2]) * t);
+      return `#${((1 << 24) | (r << 16) | (g << 8) | bl).toString(16).slice(1)}`;
+    }
+    function hexRgb(hex) {
+      const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+      if (!m) return null;
+      const n = parseInt(m[1], 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+
     function tokenOverrides(p) {
+      const accent = p.accent;
+      // Surfaces, from deepest (base) to most elevated (layer-4).
+      const bgBase   = rgba(p.bg, 0.9);
+      const layer1   = rgba(p.layer1, 0.9);
+      const layer2   = rgba(p.layer2, 0.92);
+      const overlay  = rgba(p.overlay, 0.95);
+      // A slightly lifted solid layer used for cards/menus/tooltips.
+      const cardFill = rgba(p.layer2, 0.96);
+      const solidLayer3 = p.layer2;
+      const solidLayer4 = mix(p.layer2, p.accent, 0.06);
+      const hoverAccent = mix(p.layer2, p.accent, 0.16);
+      const hoverPlain  = mix(p.layer2, p.label2, 0.10);
+
+      const rgbBg = hexRgb(p.bg) || [0, 0, 0];
+      const rgbOverlay = `rgba(${rgbBg[0]}, ${rgbBg[1]}, ${rgbBg[2]}, 0.72)`;
+
+      // Labels. label1 is the primary text, label2 the secondary. Derive the
+      // dimmer tiers by mixing toward the background, so contrast stays honest.
+      const label1 = p.label1;
+      const label2 = p.label2;
+      const label3 = mix(p.label2, p.bg, 0.35);
+      const label4 = mix(p.label2, p.bg, 0.55);
+
+      // Error / warn / success / info families tinted for the Matrix look.
+      const error = '#ff5a5a', error2 = '#ff8a8a', error3 = '#ffb3b3';
+      const warn  = '#ffe08a', warn2 = '#ffd35c', warn3 = '#ffc94d';
+      const ok    = accent,    ok2 = mix(accent, '#ffffff', 0.25), ok3 = mix(accent, p.bg, 0.4);
+      const info  = mix(accent, '#4fc3ff', 0.5);
+
       return {
-        '--dsw-alias-bg-base':        pair(rgba(p.bg, 0.9)),
-        '--dsw-alias-bg-layer-1':     pair(rgba(p.layer1, 0.9)),
-        '--dsw-alias-bg-layer-2':     pair(rgba(p.layer2, 0.92)),
-        '--dsw-alias-bg-overlay':     pair(rgba(p.overlay, 0.95)),
-        '--dsw-alias-border-l1':      pair(p.border1),
-        '--dsw-alias-border-l2':      pair(p.border2),
-        '--dsw-alias-brand-primary':  pair(p.brand || p.accent),
-        '--dsw-alias-label-primary':  pair(p.label1),
-        '--dsw-alias-label-secondary':pair(p.label2),
-        '--dsw-alias-state-error-primary':   pair('#ff3b3b'),
-        '--dsw-alias-state-idle-primary':    pair(p.label2),
-        '--dsw-alias-state-success-primary': pair(p.accent),
-        '--dsw-alias-state-warn-primary':    pair('#ffe08a'),
-        '--dsw-specific-sidebar-fill':       pair(rgba(p.bg, 0.92)),
+        // ---- Backgrounds / surfaces ----
+        '--dsw-alias-bg-base':                  pair(bgBase),
+        '--dsw-alias-bg-l1':                    pair(layer1),
+        '--dsw-alias-bg-l2':                    pair(layer2),
+        '--dsw-alias-bg-layer-1':               pair(layer1),
+        '--dsw-alias-bg-layer-2':               pair(layer2),
+        '--dsw-alias-bg-layer-3':               pair(solidLayer3),
+        '--dsw-alias-bg-layer-4':               pair(solidLayer4),
+        '--dsw-alias-bg-overlay':               pair(overlay),
+        '--dsw-alias-bg-skeleton':              pair(mix(p.layer2, p.label2, 0.12)),
+        '--dsw-alias-bg-multi-select':          pair(hoverAccent),
+        '--dsw-alias-bg-mask-1':                pair(rgbOverlay),
+        '--dsw-alias-bg-mask-2':                pair(rgba(p.bg, 0.82)),
+        '--dsw-alias-bg-mask-3':                pair(rgba(p.bg, 0.9)),
+        '--dsw-alias-bg-mask-drop':             pair(rgba(p.bg, 0.6)),
+        '--dsw-alias-bg-mask-photo':            pair(rgba(p.bg, 0.55)),
+        '--dsw-alias-bg-module-platform':       pair(layer2),
+        '--dsw-alias-bg-document-preview':      pair(mix(p.bg, '#ffffff', 0.98)),
+        '--dsw-alias-bg-document-selection':    pair(hoverAccent),
+
+        // ---- Fills ----
+        '--dsw-alias-fill-l1':                  pair(rgba(p.layer2, 0.85)),
+        '--dsw-alias-fill-l2':                  pair(rgba(p.layer2, 0.65)),
+        '--dsw-alias-fill-tertiary':            pair(rgba(p.layer2, 0.4)),
+        '--dsw-alias-fill-tsp-secondary':       pair(rgba(p.label2, 0.12)),
+
+        // ---- Borders ----
+        '--dsw-alias-border-l1':                pair(p.border1),
+        '--dsw-alias-border-l2':                pair(p.border2),
+        '--dsw-alias-border-l3':                pair(mix(p.border2, accent, 0.25)),
+        '--dsw-alias-border-l4':                pair(mix(p.border2, accent, 0.45)),
+        '--dsw-alias-border-l2-darkmode-thin':  pair(p.border1),
+        '--dsw-alias-border-inverted':          pair(mix(p.border2, '#ffffff', 0.2)),
+        '--dsw-alias-border-inverted2':         pair(mix(p.border2, '#ffffff', 0.35)),
+        '--dsw-alias-separator-primary':        pair(p.border1),
+        '--dsw-alias-settings-card-stroke':     pair(p.border1),
+
+        // ---- Brand / links ----
+        '--dsw-alias-brand-primary':            pair(p.brand || accent),
+        '--dsw-alias-brand-primary-invert':     pair(accent),
+        '--dsw-alias-brand-primary-new-colorprimary-new-color': pair(p.brand || accent),
+        '--dsw-alias-brand-text':               pair(accent),
+        '--dsw-alias-link':                     pair(mix(accent, '#4fc3ff', 0.35)),
+
+        // ---- Labels / text ----
+        '--dsw-alias-label-primary':            pair(label1),
+        '--dsw-alias-label-primary-bluish':     pair(mix(label1, '#4fc3ff', 0.2)),
+        '--dsw-alias-label-primary-dimmed':     pair(mix(label1, p.bg, 0.3)),
+        '--dsw-alias-label-primary-foreground': pair(p.bg),
+        '--dsw-alias-label-primary-inverted':   pair(p.bg),
+        '--dsw-alias-label-secondary':          pair(label2),
+        '--dsw-alias-label-tertiary':           pair(label3),
+        '--dsw-alias-label-quaternary':         pair(label4),
+        '--dsw-alias-label-caption':            pair(label3),
+        '--dsw-alias-label-dimmed':             pair(label4),
+        '--dsw-alias-label-error':              pair(error),
+        '--dsw-alias-label-shimmer':            pair(mix(label2, accent, 0.4)),
+        '--dsw-alias-label-deep-diving':        pair(accent),
+        '--dsw-alias-label-deep-diving-shimmer': pair(ok2),
+        '--dsw-alias-label-document-preview':   pair(mix(p.bg, '#000000', 1)),
+
+        // ---- Buttons ----
+        '--dsw-alias-button-primary-fill':      pair(p.brand || accent),
+        '--dsw-alias-button-primary-hover':     pair(mix(p.brand || accent, '#ffffff', 0.15)),
+        '--dsw-alias-button-primary-dimmed':    pair(mix(p.brand || accent, p.bg, 0.5)),
+        '--dsw-alias-button-contrast-fill':     pair(label1),
+        '--dsw-alias-button-elevated-fill':     pair(solidLayer3),
+        '--dsw-alias-button-floating-fill':     pair(solidLayer4),
+        '--dsw-alias-button-floating-hover':    pair(hoverPlain),
+        '--dsw-alias-button-info-fill':         pair(info),
+        '--dsw-alias-button-info-hover':        pair(mix(info, '#ffffff', 0.15)),
+        '--dsw-alias-button-ghost-active-fill': pair(hoverAccent),
+        '--dsw-alias-button-ghost-active-hover': pair(mix(p.layer2, accent, 0.22)),
+        '--dsw-alias-button-ghost-active-border': pair(accent),
+        '--dsw-alias-button-tool-bar-fill':     pair(rgba(p.layer2, 0.8)),
+        '--dsw-alias-button-tool-bar-fill-invisible': pair('rgba(0,0,0,0)'),
+        '--dsw-alias-button-tool-bar-hover':    pair(hoverPlain),
+
+        // ---- Interactive ----
+        '--dsw-alias-interactive-bg-hover':        pair(hoverPlain),
+        '--dsw-alias-interactive-bg-active':       pair(hoverAccent),
+        '--dsw-alias-interactive-bg-hover-accent': pair(hoverAccent),
+        '--dsw-alias-interactive-bg-hover-solid':  pair(solidLayer3),
+        '--dsw-alias-interactive-bg-hover-danger': pair(mix(p.layer2, error, 0.2)),
+
+        // ---- State ----
+        '--dsw-alias-state-error-primary':   pair(error),
+        '--dsw-alias-state-error-secondary': pair(error2),
+        '--dsw-alias-state-success-primary': pair(ok),
+        '--dsw-alias-state-success-secondary': pair(ok2),
+        '--dsw-alias-state-success-tertiary':  pair(ok3),
+        '--dsw-alias-state-warn-primary':    pair(warn),
+        '--dsw-alias-state-warn-secondary':  pair(warn2),
+        '--dsw-alias-state-warn-tertiary':   pair(warn3),
+        '--dsw-alias-state-warn-label':      pair(warn),
+        '--dsw-alias-state-idle-primary':    pair(label2),
+        '--dsw-alias-state-business-primary':   pair(info),
+        '--dsw-alias-state-business-tertiary':  pair(mix(p.layer2, info, 0.25)),
+
+        // ---- Markdown / code ----
+        '--dsw-alias-markdown-code-block':          pair(rgba(p.layer1, 0.85)),
+        '--dsw-alias-markdown-code-block-banner':   pair(solidLayer3),
+        '--dsw-alias-markdown-inline-code':         pair(rgba(p.layer2, 0.8)),
+        '--dsw-alias-markdown-code-segment-selected':   pair(hoverAccent),
+        '--dsw-alias-markdown-code-segment-unselected': pair(rgba(p.layer2, 0.5)),
+        '--dsw-alias-markdown-citation':            pair(mix(accent, label2, 0.3)),
+        '--dsw-alias-markdown-tag':                 pair(info),
+        '--dsw-alias-markdown-placeholder':         pair(label4),
+        '--dsw-alias-code-diff-added':              pair(ok3),
+        '--dsw-alias-code-diff-deleted':            pair(mix(p.layer2, error, 0.3)),
+        '--dsw-alias-file-diff-added-bg':           pair(mix(p.layer2, accent, 0.12)),
+        '--dsw-alias-file-diff-added-gutter':       pair(mix(p.layer2, accent, 0.18)),
+        '--dsw-alias-file-diff-added-marker':       pair(accent),
+        '--dsw-alias-file-diff-deleted-bg':         pair(mix(p.layer2, error, 0.12)),
+        '--dsw-alias-file-diff-deleted-gutter':     pair(mix(p.layer2, error, 0.18)),
+        '--dsw-alias-file-diff-deleted-marker':     pair(error),
+
+        // ---- Menus / tooltips / toasts ----
+        '--dsw-alias-menu-group-header-fill': pair(rgba(p.layer1, 0.6)),
+        '--dsw-alias-menu-icon':              pair(label2),
+        '--dsw-alias-tooltip-bg':             pair(solidLayer4),
+        '--dsw-alias-tooltip-key-bg':         pair(hoverPlain),
+        '--dsw-alias-toast-bg':               pair(solidLayer4),
+        '--dsw-alias-toast-label':            pair(label1),
+
+        // ---- Scrollbar ----
+        '--dsw-alias-scrollbar-bg-l1':    pair(rgba(p.layer2, 0.5)),
+        '--dsw-alias-scrollbar-bg-l2':    pair(rgba(p.label2, 0.18)),
+        '--dsw-alias-scrollbar-hover-l1': pair(rgba(p.layer2, 0.7)),
+        '--dsw-alias-scrollbar-hover-l2': pair(rgba(p.label2, 0.32)),
+
+        // ---- Settings / switches / turn triggers ----
+        '--dsw-alias-settings-card-fill':  pair(cardFill),
+        '--dsw-alias-switch-thumb':        pair(accent),
+        '--dsw-alias-turn-trigger-bg':     pair(rgba(p.layer2, 0.7)),
+        '--dsw-alias-turn-trigger-bg-hover': pair(hoverPlain),
+
+        // ---- Onboarding ----
+        '--dsw-alias-onboarding-accent':         pair(accent),
+        '--dsw-alias-onboarding-card-fill':      pair(layer2),
+        '--dsw-alias-onboarding-checkbox-border': pair(p.border2),
+        '--dsw-alias-onboarding-secondary-fill': pair(rgba(p.layer2, 0.6)),
+
+        // ---- Sidebar (plugin-specific) ----
+        '--dsw-specific-sidebar-fill':      pair(rgba(p.bg, 0.92)),
       };
     }
 
@@ -150,6 +335,8 @@ window.__ModuleLoader__.load({
 html[data-matrix="on"] {
   --mx-accent: var(--dsw-mx-accent, #00ff41);
   --mx-glow: var(--dsw-mx-glow, rgba(0,255,65,0.55));
+  --mx-cyan: var(--dsw-mx-cyan, #00d4ff);
+  --mx-cyan-glow: var(--dsw-mx-cyan-glow, rgba(0,212,255,0.4));
 }
 /* Rain is an overlay canvas positioned exactly over the center column (JS sets
    left/top/size); it blends with screen so glyphs read as light over the dark
@@ -184,10 +371,12 @@ html[data-matrix="on"] input:not([type]) {
   color: var(--dsw-alias-label-primary) !important;
   caret-color: var(--mx-accent) !important;
 }
-html[data-matrix="on"] textarea::placeholder {
-  color: var(--dsw-alias-label-secondary) !important;
+html[data-matrix="on"] textarea::placeholder,
+html[data-matrix="on"] input::placeholder {
+  color: color-mix(in srgb, var(--mx-accent) 55%, transparent) !important;
+  opacity: 1 !important;
 }
-html[data-matrix="on"] a { color: var(--mx-accent) !important; }
+html[data-matrix="on"] a { color: var(--mx-cyan) !important; }
 /* Native buttons/elements often use a WHITE hover/active background from the
    base (light) theme, which makes light text unreadable in our dark Matrix UI.
    Tint button hover/active backgrounds to a translucent accent-green and keep
@@ -208,6 +397,74 @@ html[data-matrix="on"] ::selection {
   background: color-mix(in srgb, var(--mx-accent) 35%, transparent);
   color: #fff;
 }
+
+/* ---- Visual enhancements (1/2/3/4) --------------------------------------
+   Pure presentational CSS gated by html[data-matrix="on"]; disabling removes
+   every rule. No layout/slot changes; native radii & elevation are preserved
+   (we add glow/border/filter, we do not alter border-radius). */
+
+/* (1) Frosted glass + neon border + outer glow on floating panels/cards.
+   Targets real DSH CSS-module classes via stable class fragments (hashed
+   prefixes vary, so we match the trailing name): menus, dialogs, the settings
+   panel. The effect is subtle (low-opacity border + soft glow) and
+   backdrop-filter blurs only what is behind the panel (the rain), never text. */
+html[data-matrix="on"] [class*="_menu"]:not([class*="_menuAnchor"]):not([class*="_menuItem"]):not([class*="_menuGroup"]),
+html[data-matrix="on"] [class*="_dialog"],
+html[data-matrix="on"] [class*="_guidePanel"],
+html[data-matrix="on"] [class*="_modal"] {
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  border: 1px solid color-mix(in srgb, var(--mx-accent) 28%, transparent) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--mx-accent) 12%, transparent),
+    0 8px 32px rgba(0,0,0,0.65),
+    0 0 24px -6px var(--mx-glow) !important;
+}
+
+/* (2) Cyan as the secondary accent: links already cyan (see a{} above); the
+   inline citation/tag chips pick up the cyan tint while the primary accent
+   stays green. Real classes: markdown citation/tag live under _citation/_tag
+   fragments in the markdown renderer. */
+html[data-matrix="on"] [class*="_citation"],
+html[data-matrix="on"] [class*="_inlineCode"] {
+  color: var(--mx-cyan) !important;
+}
+
+/* (3) Sidebar: a vertical glowing green divider on the rail edge, and line
+   icons that glow on hover. The layout package exposes the sidebar column
+   class; we light up its boundary with an inset accent line + soft glow. */
+html[data-matrix="on"] [class*="_sidebarCol"] {
+  box-shadow: inset -1px 0 0 0 color-mix(in srgb, var(--mx-accent) 45%, transparent),
+              2px 0 18px -8px var(--mx-glow) !important;
+}
+html[data-matrix="on"] [class*="_sidebarCol"] svg,
+html[data-matrix="on"] [class*="_sidebarButton"] svg {
+  transition: color 140ms ease, filter 140ms ease;
+}
+html[data-matrix="on"] [class*="_sidebarCol"] button:hover svg,
+html[data-matrix="on"] [class*="_sidebarCol"] a:hover svg,
+html[data-matrix="on"] [class*="_sidebarButton"]:hover svg {
+  color: var(--mx-accent) !important;
+  filter: drop-shadow(0 0 6px var(--mx-glow)) !important;
+}
+
+/* (4) Code blocks render in a monospace stack (cyan-tinted border/glow), never
+   the body text; body/CJK text keeps the native UI font so Chinese stays
+   clean. Real code classes: _codeBlock/_codeBody/_sourceCode/_codeSection. */
+html[data-matrix="on"] code,
+html[data-matrix="on"] pre,
+html[data-matrix="on"] [class*="_codeBlock"],
+html[data-matrix="on"] [class*="_codeBody"],
+html[data-matrix="on"] [class*="_sourceCode"] {
+  font-family: "JetBrains Mono", "Sarasa Mono SC", "Cascadia Code",
+    ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+}
+html[data-matrix="on"] [class*="_codeBlock"],
+html[data-matrix="on"] [class*="_codeSection"] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mx-cyan) 22%, transparent),
+              0 0 20px -10px var(--mx-cyan-glow);
+}
+
 /* Rain canvas: fixed overlay positioned by JS over the center column; blends
    with screen so glyphs light up over the dark UI without hiding bright text;
    click-through and above content. Only its own position/z-index, not layout. */
@@ -268,11 +525,19 @@ html[data-matrix="on"] ::selection {
         root.setAttribute('data-matrix-palette', s.palette);
         root.style.setProperty('--dsw-mx-accent', p.accent);
         root.style.setProperty('--dsw-mx-glow', `rgba(${p.trail}, ${(0.25 + 0.5 * (s.glow / 100)).toFixed(3)})`);
+        // Electric-cyan secondary accent, harmonized per palette: keep a cool
+        // cyan for green/ice, and tint toward the palette's own trail for warm
+        // palettes (amber) so cyan does not clash with an orange scheme.
+        const cyan = (s.palette === 'amber') ? mix(p.accent, '#00d4ff', 0.55) : '#00d4ff';
+        root.style.setProperty('--dsw-mx-cyan', cyan);
+        root.style.setProperty('--dsw-mx-cyan-glow', `rgba(${hexRgb(cyan).join(',')}, ${(0.22 + 0.4 * (s.glow / 100)).toFixed(3)})`);
       } else {
         root.removeAttribute('data-matrix');
         root.removeAttribute('data-matrix-palette');
         root.style.removeProperty('--dsw-mx-accent');
         root.style.removeProperty('--dsw-mx-glow');
+        root.style.removeProperty('--dsw-mx-cyan');
+        root.style.removeProperty('--dsw-mx-cyan-glow');
       }
     }
 
@@ -523,7 +788,9 @@ html[data-matrix="on"] ::selection {
       );
     }
 
-    // ---- Settings panel (settings.general.item) -------------------------
+    // ---- Settings panel -------------------------------------------------
+    // Rendered as a standalone settings *section* (its own entry in the left
+    // sidebar of the settings dialog), not as a row inside "General".
     function SettingsRow() {
       const [, force] = React.useState(0);
       React.useEffect(() => store.subscribe(() => force((n) => n + 1)), []);
@@ -581,6 +848,32 @@ html[data-matrix="on"] ::selection {
           h(Slider, { label: '发光强度', value: s.glow, min: 0, max: 100, onChange: (v) => store.update({ glow: v }), suffix: '%' }),
           h('div', { style: { ...subStyle, marginTop: 2 } }, '提示：雨速数值越小越快；AI 思考时雨会自动变密。'),
         ) : null,
+      );
+    }
+
+    // Standalone settings section page (own left-sidebar entry). Reuses the
+    // same SettingsRow body but frames it like the other settings pages: a
+    // page title/description heading plus the controls column.
+    function MatrixSection() {
+      return h('div', {
+        style: {
+          display: 'flex', flexDirection: 'column', gap: 2,
+          padding: '4px 2px', maxWidth: 620,
+        },
+      },
+        h('div', {
+          style: {
+            fontSize: 16, fontWeight: 600, lineHeight: '24px',
+            color: 'var(--dsw-alias-label-primary)', marginBottom: 2,
+          },
+        }, 'Matrix 数字雨主题'),
+        h('div', {
+          style: {
+            fontSize: 13, lineHeight: '20px',
+            color: 'var(--dsw-alias-label-secondary)', marginBottom: 10,
+          },
+        }, 'DeepSeek Harness 全屏赛博终端主题：代码雨动画、荧光配色与界面美化。'),
+        h(SettingsRow),
       );
     }
 
@@ -753,12 +1046,13 @@ html[data-matrix="on"] ::selection {
           // Slot registrations.
           const slots = service(ctx, 'slots');
           if (slots && typeof slots.inject === 'function') {
-            // Settings control panel.
+            // Settings page: a standalone section in the left sidebar.
             try {
-              disposers.push(slots.inject('settings.general.item', () => slots.register({
-                name: 'settings.general.item', id: 'matrix-theme-settings', order: 13,
-              }, SettingsRow)));
-            } catch (e) { log('settings row', e); }
+              disposers.push(slots.inject('settings.section', () => slots.register({
+                name: 'settings.section', id: 'matrix', order: 50,
+                label: () => 'Matrix 主题',
+              }, MatrixSection)));
+            } catch (e) { log('settings section', e); }
 
             // Sidebar footer entry toggle.
             try {
