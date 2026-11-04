@@ -226,17 +226,36 @@ html[data-matrix="on"] ::selection {
 `;
 
     // ---- Stylesheet lifecycle -------------------------------------------
-    function installCss() {
-      if (typeof document === 'undefined') return () => {};
+    // Returns a disposer. Callers should also call ensureCss() directly on
+    // retries: if the host re-renders <head> (or the plugin mounts before
+    // <head> exists) our <style> tag can be dropped, so we re-assert it.
+    let cssDispose = null;
+    function ensureCss() {
+      if (typeof document === 'undefined') return;
+      const head = document.head || document.getElementsByTagName('head')[0];
+      if (!head) return;
       const id = 'data-matrix-theme-css';
       let tag = document.querySelector('style[' + id + ']');
       if (!tag) {
         tag = document.createElement('style');
         tag.setAttribute(id, '');
         tag.textContent = CSS;
-        document.head.appendChild(tag);
       }
-      return () => { try { tag.remove(); } catch (e) {} };
+      // Re-append if detached, so the sheet always lives in the current head.
+      if (tag.parentNode !== head) head.appendChild(tag);
+    }
+    function installCss() {
+      if (typeof document === 'undefined') return () => {};
+      ensureCss();
+      const id = 'data-matrix-theme-css';
+      cssDispose = () => {
+        try {
+          const t = document.querySelector('style[' + id + ']');
+          if (t) t.remove();
+        } catch (e) {}
+        cssDispose = null;
+      };
+      return () => { if (cssDispose) cssDispose(); };
     }
 
     function applyDomState() {
@@ -597,15 +616,30 @@ html[data-matrix="on"] ::selection {
       );
     }
 
-    // Resilient service lookup (property first, then ctx.get).
+    // Resilient service lookup. Cordis contexts expose provided services in
+    // several shapes depending on version: as a direct property (ctx.theme),
+    // via ctx.get(name), via ctx.reflect.get(name), or from a parent fiber.
+    // Try every path so a version/shape mismatch never silently disables tokens.
     function service(ctx, name) {
-      try { if (ctx && ctx[name]) return ctx[name]; } catch (e) {}
-      try { if (ctx && typeof ctx.get === 'function') return ctx.get(name); } catch (e) {}
+      if (!ctx) return undefined;
+      const tries = [
+        () => ctx[name],
+        () => (typeof ctx.get === 'function' ? ctx.get(name) : undefined),
+        () => (ctx.reflect && typeof ctx.reflect.get === 'function' ? ctx.reflect.get(name) : undefined),
+        () => (ctx.store && ctx.store[name]),
+        () => (ctx.root && ctx.root[name]),
+        () => (ctx.parent && ctx.parent[name]),
+      ];
+      for (const t of tries) {
+        try { const v = t(); if (v !== undefined && v !== null) return v; } catch (e) {}
+      }
       return undefined;
     }
 
     return {
-      inject: ['slots'],
+      // 'theme' is declared so the loader guarantees the service exists before
+      // apply() runs; 'slots' for UI registration.
+      inject: ['slots', 'theme'],
       apply(ctx) {
         const disposers = [];
         const log = (m, e) => { if (typeof console !== 'undefined') console.error('matrix-theme: ' + m, e); };
@@ -695,6 +729,26 @@ html[data-matrix="on"] ::selection {
           // Re-assert tokens when the active theme changes while enabled.
           try { disposers.push(ctx.on('theme/change', () => { if (store.get().enabled) applyTokens(); })); } catch (e) { log('theme/change', e); }
           disposers.push(store.subscribe(() => reconcile()));
+
+          // ---- Startup self-heal ------------------------------------------
+          // `inject: ['theme']` guarantees the theme service is ready before
+          // apply() runs, so tokens land on first apply. This is only a light
+          // belt-and-suspenders: if the plugin mounted before <head> existed,
+          // re-assert once when the document finishes loading. No polling.
+          const timers = [];
+          function reassert() {
+            try {
+              ensureCss();
+              applyDomState();
+              if (store.get().enabled) { forceDark(); applyTokens(); }
+              reconcile();
+            } catch (e) { log('reassert', e); }
+          }
+          if (typeof document !== 'undefined' && document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', reassert, { once: true });
+            disposers.push(() => { try { document.removeEventListener('DOMContentLoaded', reassert); } catch (e) {} });
+          }
+          disposers.push(() => { for (const t of timers) { try { window.clearTimeout(t); } catch (e) {} } });
 
           // Slot registrations.
           const slots = service(ctx, 'slots');
