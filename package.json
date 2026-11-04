@@ -1,0 +1,35 @@
+{
+  "name": "dsh-theme-matrix",
+  "version": "1.0.0",
+  "description": "Global cyber-terminal Matrix theme for DeepSeek Harness: click-through full-screen code-rain, phosphor-green UI, sidebar toggle, and adjustable speed / density / opacity / glow with three palettes.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PlayerOneD/dsh-theme-matrix.git"
+  },
+  "homepage": "https://github.com/PlayerOneD/dsh-theme-matrix",
+  "keywords": ["dsh-plugin", "dsh-theme", "theme", "matrix", "digital-rain"],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.png"
+  },
+  "files": ["index.js", "client.js", "cordis.patch.yml", "locale/*.json", "icon.png"],
+  "peerDependencies": {
+    "@deepseek-ai/dsh-client-ui-renderer": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0",
+    "@deepseek-ai/dsh-client-ui-theme": ">=0.0.1-rc.1 <0.1.0 || >=0.1.0-rc.1 <0.2.0-0"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-theme"
+      ]
+    }
+  }
+}
