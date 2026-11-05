@@ -463,6 +463,28 @@ html[data-matrix="on"] [class*="_9r0rkG_menu"] {
     0 0 22px -8px var(--mx-glow) !important;
 }
 
+/* (1b-2) HARD NO-EDGE TEST: strip every border AND shadow from any popover
+   menu surface, leaving only its background fill and radius. Some menus draw
+   their hairline as a real 1px or 0.5px border (not a box-shadow), which keeps
+   showing as a dotted edge at rounded corners no matter how we patch the
+   shadow. This makes them completely edge-free so we can see the fill alone.
+   Broad on purpose (all [role="menu"] plus the known popover class names). */
+html[data-matrix="on"] [role="menu"],
+html[data-matrix="on"] [class*="_menu"]:not([class*="_menuItem"]):not([class*="_menuGroup"]):not([class*="_menuAnchor"]),
+html[data-matrix="on"] [class*="A6Bq1a_panel"],
+html[data-matrix="on"] [class*="xXe6ja_panel"],
+html[data-matrix="on"] [class*="rezYhW_menu"],
+html[data-matrix="on"] [class*="Z17U9a_panel"],
+html[data-matrix="on"] [class*="Fu0XRq_panel"],
+html[data-matrix="on"] [class*="VBK9GG_panel"],
+html[data-matrix="on"] [class*="j99sVW_card"],
+html[data-matrix="on"] [class*="_9r0rkG_menu"] {
+  border: none !important;
+  outline: none !important;
+  box-shadow: 0 8px 30px -8px rgba(0, 0, 0, 0.7), 0 0 22px -8px var(--mx-glow) !important;
+  background-clip: padding-box !important;
+}
+
 /* (1c) Real popover/panel containers that DO have a radius. They draw their
    edge with box-shadow: var(--dsw-elevation-*) whose first layer is the 0.5px
    hairline; on the rounded dark surface that reads as a dotted corner. Replace
