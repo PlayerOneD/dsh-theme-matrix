@@ -480,6 +480,51 @@ html[data-matrix="on"] [class*="_codeSection"] {
   mix-blend-mode: screen;
   will-change: opacity;
 }
+
+/* ---- Rounded hover backgrounds -----------------------------------------
+   Many DSH hover fills (and our own generic button:hover tint above) paint a
+   rectangular background on elements whose container does not clip corners,
+   so the highlighted area shows square edges. Give hovered/list-row surfaces a
+   small radius so the highlight follows the rounded dark-UI language. We set
+   the radius on the hovered element itself; elements that already declare a
+   larger radius keep it (we only add when the computed radius is 0 is not
+   expressible in CSS, so we scope narrowly to interactive rows/buttons and use
+   a modest 7px that reads well on both compact rows and pills). Gated by
+   html[data-matrix="on"] so disabling removes it. */
+html[data-matrix="on"] button,
+html[data-matrix="on"] [role="button"],
+html[data-matrix="on"] [class*="_row"],
+html[data-matrix="on"] [class*="_item"],
+html[data-matrix="on"] [class*="_option"],
+html[data-matrix="on"] [class*="_header"],
+html[data-matrix="on"] [class*="_trigger"],
+html[data-matrix="on"] [class*="_tab"],
+html[data-matrix="on"] [class*="_selector"],
+html[data-matrix="on"] [class*="_chip"],
+html[data-matrix="on"] [class*="_pill"],
+html[data-matrix="on"] [class*="_cell"],
+html[data-matrix="on"] [class*="_card"],
+html[data-matrix="on"] [class*="_member"],
+html[data-matrix="on"] [class*="_seat"],
+html[data-matrix="on"] [class*="_nav"],
+html[data-matrix="on"] [class*="_entry"],
+html[data-matrix="on"] [class*="_sessionRow"],
+html[data-matrix="on"] [class*="_workspace"],
+html[data-matrix="on"] [class*="_crumb"],
+html[data-matrix="on"] [class*="_link"],
+html[data-matrix="on"] [class*="_action"],
+html[data-matrix="on"] [class*="_tool"],
+html[data-matrix="on"] [class*="_button"] {
+  border-radius: 7px;
+}
+/* Compact circular icon buttons/pills should stay round, not 7px squares:
+   if the native design is a full pill/circle these keep their own radius via
+   more specific native rules; we do not force radius on bare icon spans. */
+html[data-matrix="on"] [class*="_iconButton"],
+html[data-matrix="on"] [class*="_roundButton"],
+html[data-matrix="on"] [class*="_iconBtn"] {
+  border-radius: 8px;
+}
 `;
 
     // ---- Stylesheet lifecycle -------------------------------------------
