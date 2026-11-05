@@ -525,6 +525,28 @@ html[data-matrix="on"] [class*="_roundButton"],
 html[data-matrix="on"] [class*="_iconBtn"] {
   border-radius: 8px;
 }
+
+/* ---- Clean rounded popover surfaces (menu / dropdown) -------------------
+   The DSH popover list (e.g. "选择添加插件方式") draws its surface ONLY with
+   box-shadow: var(--dsw-elevation-prominent), whose first layer is a 0.5px
+   hairline stroke (0 0 0 .5px) around a box that has NO border-radius. On the
+   dark Matrix background that sub-pixel square stroke reads as a faint dotted
+   outline at the four corners. Fix: give every role=menu popover a real
+   background fill + a proper radius so the surface is a clean rounded rect,
+   and replace the hairline stroke with a same-color inset ring that follows
+   the rounded edge (no more corner dotting). Gated by html[data-matrix="on"]. */
+html[data-matrix="on"] [role="menu"] {
+  background: var(--dsw-specific-menu, var(--dsw-alias-bg-layer-2)) !important;
+  border-radius: var(--dsw-radius-lg) !important;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--mx-accent) 22%, transparent),
+    0 8px 28px -6px rgba(0, 0, 0, 0.7),
+    0 0 22px -8px var(--mx-glow) !important;
+}
+/* Nested submenus inherit the same treatment; keep their own stacking. */
+html[data-matrix="on"] [role="menu"] [role="menu"] {
+  border-radius: var(--dsw-radius-md) !important;
+}
 `;
 
     // ---- Stylesheet lifecycle -------------------------------------------
