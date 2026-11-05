@@ -565,7 +565,6 @@ html[data-matrix="on"] [class*="_selector"],
 html[data-matrix="on"] [class*="_chip"],
 html[data-matrix="on"] [class*="_pill"],
 html[data-matrix="on"] [class*="_cell"],
-html[data-matrix="on"] [class*="_card"],
 html[data-matrix="on"] [class*="_member"],
 html[data-matrix="on"] [class*="_seat"],
 html[data-matrix="on"] [class*="_nav"],
@@ -579,6 +578,10 @@ html[data-matrix="on"] [class*="_tool"],
 html[data-matrix="on"] [class*="_button"] {
   border-radius: 7px;
 }
+/* _card was intentionally removed from the 7px hover-radius list above: real
+   surface cards (e.g. the bottom chat composer GRgSLq_card at 28px, and other
+   *_card containers) ship their own large radius, and forcing 7px flattened the
+   composer into a small-cornered box. Cards keep their native radius. */
 /* Compact circular icon buttons/pills should stay round, not 7px squares:
    if the native design is a full pill/circle these keep their own radius via
    more specific native rules; we do not force radius on bare icon spans. */
