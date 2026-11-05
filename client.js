@@ -492,7 +492,6 @@ html[data-matrix="on"] [class*="_9r0rkG_menu"] {
    real class names so no unrelated element is touched. */
 html[data-matrix="on"] [class*="A6Bq1a_panel"],
 html[data-matrix="on"] [class*="xXe6ja_panel"],
-html[data-matrix="on"] [class*="SNx2jG_preview"],
 html[data-matrix="on"] [class*="rezYhW_menu"],
 html[data-matrix="on"] [class*="js5r2G_list"],
 html[data-matrix="on"] [class*="Z17U9a_panel"],
@@ -504,6 +503,29 @@ html[data-matrix="on"] [class*="V7pFBG_registry"] {
     0 8px 30px -8px rgba(0, 0, 0, 0.7),
     0 0 22px -8px var(--mx-glow) !important;
 }
+
+/* (1d) Conversation "turn preview" hover card (right-rail peek), class
+   SNx2jG_preview. It is a rounded card (radius-lg) that floats beside a
+   conversation turn and shows two text lines (previewPrompt / previewResponse).
+   We give the CARD itself the clean Matrix edge (1px inset ring + soft glow,
+   following its radius) and make sure the inner prompt/response blocks carry
+   NO border / outline / shadow of their own -- the goal is a single clean
+   rounded card with plain text inside, never two square framed boxes. */
+html[data-matrix="on"] [class*="SNx2jG_preview"] {
+  border: 0 !important;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--mx-accent) 26%, transparent),
+    0 8px 30px -8px rgba(0, 0, 0, 0.7),
+    0 0 22px -8px var(--mx-glow) !important;
+}
+html[data-matrix="on"] [class*="SNx2jG_previewPrompt"],
+html[data-matrix="on"] [class*="SNx2jG_previewResponse"] {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
 
 /* (2) Cyan as the secondary accent: links already cyan (see a{} above); the
    inline citation/tag chips pick up the cyan tint while the primary accent
