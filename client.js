@@ -438,11 +438,49 @@ html[data-matrix="on"] [class*="_guidePanel"],
 html[data-matrix="on"] [class*="_modal"] {
   backdrop-filter: blur(10px) saturate(120%);
   -webkit-backdrop-filter: blur(10px) saturate(120%);
-  border: 1px solid color-mix(in srgb, var(--mx-accent) 28%, transparent) !important;
+  /* Inset ring instead of a border: an inset box-shadow follows the element's
+     own border-radius (round stays round, square stays square) and does not
+     shift layout. A real border would add 1px to the box and paint a square
+     frame on radius-less menus. */
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--mx-accent) 12%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--mx-accent) 30%, transparent),
     0 8px 32px rgba(0,0,0,0.65),
     0 0 24px -6px var(--mx-glow) !important;
+}
+
+/* (1b) Menu/popover surfaces that have NO border-radius of their own. Their
+   0.5px elevation hairline has nowhere to follow, so it renders as a faint
+   square dotted edge. Give them a card radius AND a clean inset ring so the
+   edge reads as a solid rounded line. Listed by their real hashed class names
+   (stable in this build) to avoid catching unrelated _menu/_card elements. */
+html[data-matrix="on"] [class*="j99sVW_card"],
+html[data-matrix="on"] [class*="pc3rQa_menu"],
+html[data-matrix="on"] [class*="_9r0rkG_menu"] {
+  border-radius: var(--dsw-radius-lg) !important;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--mx-accent) 26%, transparent),
+    0 8px 28px -6px rgba(0, 0, 0, 0.7),
+    0 0 22px -8px var(--mx-glow) !important;
+}
+
+/* (1c) Real popover/panel containers that DO have a radius. They draw their
+   edge with box-shadow: var(--dsw-elevation-*) whose first layer is the 0.5px
+   hairline; on the rounded dark surface that reads as a dotted corner. Replace
+   the whole shadow with a clean 1px inset ring + soft outer glow, keyed to the
+   real class names so no unrelated element is touched. */
+html[data-matrix="on"] [class*="A6Bq1a_panel"],
+html[data-matrix="on"] [class*="xXe6ja_panel"],
+html[data-matrix="on"] [class*="SNx2jG_preview"],
+html[data-matrix="on"] [class*="rezYhW_menu"],
+html[data-matrix="on"] [class*="js5r2G_list"],
+html[data-matrix="on"] [class*="Z17U9a_panel"],
+html[data-matrix="on"] [class*="Fu0XRq_panel"],
+html[data-matrix="on"] [class*="VBK9GG_panel"],
+html[data-matrix="on"] [class*="V7pFBG_registry"] {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--mx-accent) 26%, transparent),
+    0 8px 30px -8px rgba(0, 0, 0, 0.7),
+    0 0 22px -8px var(--mx-glow) !important;
 }
 
 /* (2) Cyan as the secondary accent: links already cyan (see a{} above); the
