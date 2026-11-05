@@ -340,12 +340,27 @@ html[data-matrix="on"] {
   /* Global hairline fix. DSH draws EVERY popover/panel/menu/dropdown edge with
      box-shadow layers that begin with --dsw-elevation-stroke, a 0.5px sub-pixel
      stroke (0 0 0 .5px). On rounded corners over the dark Matrix background that
-     stroke antialiases into a faint dotted edge. Redefining this single token to
-     a 1px INSET ring fixes the corners of all surfaces at once, instead of
-     chasing individual hashed class names. inset follows the rounded path
-     cleanly; the token is mixed with other (non-inset) shadows via var() so the
-     inset keyword applies only to this layer. */
-  --dsw-elevation-stroke: inset 0 0 0 1px var(--dsw-elevation-stroke-color) !important;
+     stroke antialiases into a faint dotted edge. We neutralise it at the root:
+     1) redefine --dsw-elevation-stroke itself to a clean 1px INSET ring, and
+     2) inline-expand the three composite elevation tokens so they no longer pull
+        the 0.5px stroke at all (belt and suspenders -- some browsers/subtrees
+        resolve the var(--dsw-elevation-stroke) inside a :root-declared token in
+        a way that ignored the html-scoped override). The 1px ring uses
+        --dsw-elevation-stroke-color, which each popover sets to its own border
+        token, so tone stays consistent. Scoped to html[data-matrix="on"]. */
+  --dsw-elevation-stroke: inset 0 0 0 1px var(--dsw-elevation-stroke-color);
+  --dsw-elevation-panel:
+    inset 0 0 0 1px var(--dsw-elevation-stroke-color),
+    0 3px 8px 0 rgba(0,0,0,0.06),
+    0 0 16px 0 rgba(0,0,0,0.05);
+  --dsw-elevation-prominent:
+    inset 0 0 0 1px var(--dsw-elevation-stroke-color),
+    0 3px 8px 0 rgba(0,0,0,0.08),
+    0 0 20px 0 rgba(0,0,0,0.10);
+  --dsw-elevation-soft:
+    inset 0 0 0 1px var(--dsw-elevation-stroke-color),
+    0 4px 16px 0 rgba(0,0,0,0.06),
+    0 0 24px 0 rgba(0,0,0,0.06);
 }
 /* Rain is an overlay canvas positioned exactly over the center column (JS sets
    left/top/size); it blends with screen so glyphs read as light over the dark
