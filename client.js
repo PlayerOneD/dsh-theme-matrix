@@ -337,6 +337,15 @@ html[data-matrix="on"] {
   --mx-glow: var(--dsw-mx-glow, rgba(0,255,65,0.55));
   --mx-cyan: var(--dsw-mx-cyan, #00d4ff);
   --mx-cyan-glow: var(--dsw-mx-cyan-glow, rgba(0,212,255,0.4));
+  /* Global hairline fix. DSH draws EVERY popover/panel/menu/dropdown edge with
+     box-shadow layers that begin with --dsw-elevation-stroke, a 0.5px sub-pixel
+     stroke (0 0 0 .5px). On rounded corners over the dark Matrix background that
+     stroke antialiases into a faint dotted edge. Redefining this single token to
+     a 1px INSET ring fixes the corners of all surfaces at once, instead of
+     chasing individual hashed class names. inset follows the rounded path
+     cleanly; the token is mixed with other (non-inset) shadows via var() so the
+     inset keyword applies only to this layer. */
+  --dsw-elevation-stroke: inset 0 0 0 1px var(--dsw-elevation-stroke-color) !important;
 }
 /* Rain is an overlay canvas positioned exactly over the center column (JS sets
    left/top/size); it blends with screen so glyphs read as light over the dark
@@ -560,6 +569,16 @@ html[data-matrix="on"] [class*="AnXs9G_panel"] {
     inset 0 0 0 1px color-mix(in srgb, var(--mx-accent) 20%, transparent),
     0 12px 40px -12px rgba(0, 0, 0, 0.75),
     0 0 26px -10px var(--mx-glow) !important;
+}
+
+/* Text-input focus rings and a few component styles hardcode a 0.5px hairline
+   INSET stroke (inset 0 0 0 .5px) for their own edge/focus. Bump those to a
+   clean 1px so they match the unified look. Targets the documented classes:
+   plugin-manager install/registry text fields, and the schedule date cell. */
+html[data-matrix="on"] [class*="_installField"] input[type="text"]:focus,
+html[data-matrix="on"] [class*="_registryCustomField"]:focus,
+html[data-matrix="on"] [class*="_cell"][aria-current="date"] {
+  box-shadow: inset 0 0 0 1px var(--dsw-elevation-stroke-color, var(--mx-accent)) !important;
 }
 `;
 
