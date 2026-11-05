@@ -543,6 +543,23 @@ html[data-matrix="on"] [role="menu"][class*="_addMenu"] {
     0 8px 28px -6px rgba(0, 0, 0, 0.7),
     0 0 22px -8px var(--mx-glow) !important;
 }
+
+/* ---- Clean rounded large floating panels (settings etc.) ---------------
+   The settings panel (.AnXs9G_panel, 28px radius) and similar large overlays
+   draw their edge with box-shadow: var(--dsw-elevation-prominent), whose first
+   layer is a 0.5px hairline stroke (0 0 0 .5px). On a 28px rounded corner over
+   the dark Matrix background that sub-pixel stroke antialiases into a faint
+   dotted edge at the four corners. Replace it with a 1px inset ring (which
+   follows the rounded path cleanly at any radius) plus a soft outer shadow, so
+   the corners read as a solid clean line. Opaque fill also stops the rain from
+   shimmering through the panel edge. Gated by html[data-matrix="on"]. */
+html[data-matrix="on"] [class*="_panel"]:not([class*="_panelButton"]):not([class*="_panelRow"]) {
+  background: var(--dsw-alias-bg-layer-2) !important;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--mx-accent) 20%, transparent),
+    0 12px 40px -12px rgba(0, 0, 0, 0.75),
+    0 0 26px -10px var(--mx-glow) !important;
+}
 `;
 
     // ---- Stylesheet lifecycle -------------------------------------------
